@@ -110,7 +110,7 @@ router.post('/forgot-password', async (req, res) => {
   await mailgun.messages().send({
     from: EMAIL_FROM,
     to: user.email,
-    subject: 'Reset password for app-name',
+    subject: 'Reset password for Localist',
     text: `Follow the link to reset your password: ${FRONT_APP_URL}/reset-password?token=${token}`,
   });
 
@@ -152,7 +152,7 @@ router.post('/reset-password', async (req, res) => {
   await mailgun.messages().send({
     from: EMAIL_FROM,
     to: user.email,
-    subject: 'Your new password for app-name',
+    subject: 'Your new password for Localist',
     text: `Your new password is: ${password}\nUse it for login ${FRONT_APP_URL}/login`,
   });
 

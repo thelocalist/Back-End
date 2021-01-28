@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { ROLES } = require('../config/constants');
 
 const encrypt = (data, encryptionHash) =>
   crypto.pbkdf2Sync(data, encryptionHash, 1, 128, 'sha1').toString('base64');
@@ -11,6 +12,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(50),
         validate: {
           isEmail: true,
+        },
+      },
+      role: {
+        type: DataTypes.STRING(15),
+        allowNull: false,
+        defaultValue: ROLES.CUSTOMER,
+        validate: {
+          isIn: {
+            args: [Object.values(ROLES)],
+          },
         },
       },
       refreshToken: {
@@ -46,9 +57,11 @@ module.exports = (sequelize, DataTypes) => {
       ],
     }
   );
-  User.associate = function() {
-    // associations can be defined here
-  };
+
+  // TODO uncomment when will be ready to add users
+  // User.associate = function(models) {
+  //   User.hasMany(models.Story);
+  // };
 
   User.prototype.toJSON = function() {
     const values = Object.assign({}, this.get());

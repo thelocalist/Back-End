@@ -1,6 +1,7 @@
 const morganLogger = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+// const range = require('../middleware/range');
 
 module.exports = (app) => {
   app.use(morganLogger('dev'));

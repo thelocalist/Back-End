@@ -8,7 +8,7 @@ https://nodejs.org/en/download/package-manager/
 or via NVM
 
 1. Install PostgreSQL https://www.postgresql.org/download/
-and create `app-name` database
+and create `localist` database
 
 1. Open terminal in a current directory and put commands here
     ```bash

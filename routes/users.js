@@ -16,6 +16,12 @@ const { createAndSaveAuthTokens } = require('../helpers/tokens');
  * @returns {User.model} 200 - Created User
  */
 router.post('/', (req, res, next) => {
+  User.findOne({ where: { email: req.body.email } }).then((user) => {
+    if (user) {
+      return res.status(400).json({ message: 'Email is already in use' });
+    }
+    return null;
+  });
   User.create({
     email: req.body.email,
     password: req.body.password,
@@ -23,6 +29,15 @@ router.post('/', (req, res, next) => {
     .then((user) => createAndSaveAuthTokens(user, req))
     .then((tokenData) => res.json(tokenData))
     .catch(next);
+});
+
+router.get('/', (req, res) => {
+  User.findAll().then((users) =>
+    res
+      .header('Content-Range', `posts 0-${users.length}/${users.length}`)
+      .header('Access-Control-Expose-Headers', 'Content-Range')
+      .json(users)
+  );
 });
 
 /**

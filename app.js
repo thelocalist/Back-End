@@ -12,9 +12,12 @@ configure(app);
 app.use('/api', routes);
 app.use(defaultErrorHandler);
 
-sequelize.authenticate().then(() => {
-  const server = app.listen(process.env.PORT, () => {
-    // eslint-disable-next-line no-console
-    console.log(`  Server Listening on port ${server.address().port}`);
-  });
-});
+sequelize
+  .authenticate()
+  .then(() => {
+    const server = app.listen(process.env.PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`  Server Listening on port ${server.address().port}`);
+    });
+  })
+  .catch((error) => console.log(error));
