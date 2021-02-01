@@ -11,12 +11,15 @@ module.exports = {
       'Users',
       [
         {
-          email: process.env.ADMIN_LOGIN,
+          email: process.env.ADMIN_EMAIL,
           role: 'ADMIN',
           createdAt: new Date(),
           updatedAt: new Date(),
           encryptionHash,
-          encryptedPassword: encrypt(process.env.ADMIN_PASS, encryptionHash),
+          encryptedPassword: encrypt(
+            process.env.ADMIN_PASSWORD,
+            encryptionHash
+          ),
           refreshToken: randToken.uid(255),
         },
       ],

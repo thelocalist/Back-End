@@ -10,6 +10,7 @@ const app = express();
 
 configure(app);
 app.use('/api', routes);
+app.use('/', express.static('public'));
 app.use(defaultErrorHandler);
 
 sequelize
