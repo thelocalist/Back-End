@@ -1,7 +1,10 @@
 const router = require('express').Router();
 const { pick } = require('lodash');
 const passport = require('passport');
-const { Story } = require('../models');
+const { Sequelize } = require('sequelize');
+const { Story, Community } = require('../models');
+
+const { Op } = Sequelize;
 
 /**
  * Get Stories list
@@ -73,6 +76,78 @@ router.post('/', passport.authenticate('jwt'), (req, res, next) => {
     userId: req.user.id,
   })
     .then((story) => res.json(story))
+    .catch(next);
+});
+
+/**
+ * Search Stories
+ * @route GET /stories/search
+ * @group Stories
+ * @param {string} filterType.query
+ * @param {string} filterValue.query
+ * @param {string} keywords.query
+ * @param {number} pageIndex.query - e.g. 0
+ * @param {number} pageSize.query - e.g. 20
+ * @returns {Array.<Story>} 200 - Stories list
+ */
+router.get('/search', async (req, res, next) => {
+  const {
+    pageSize,
+    pageIndex,
+    filterType,
+    filterValue,
+    keywords,
+    sortField = 'updatedAt',
+    sortOrder = 'desc',
+  } = req.query;
+
+  let dbQuery = {};
+
+  if (filterType === 'authorName') {
+    dbQuery = {
+      where: { authorName: { [Op.iLike]: `%${keywords}%` } },
+      // include: [User],
+      limit: +pageSize,
+      offset: +pageIndex * +pageSize,
+      order: [[sortField, sortOrder]],
+    };
+  }
+
+  if (filterType === 'keywords') {
+    dbQuery = {
+      where: { title: { [Op.iLike]: `%${keywords}%` } },
+      limit: +pageSize,
+      offset: +pageIndex * +pageSize,
+      order: [[sortField, sortOrder]],
+    };
+  }
+
+  if (filterType === 'communityId') {
+    const community = await Community.findOne({
+      where: { title: filterValue },
+    });
+    dbQuery = {
+      where: {
+        title: { [Op.iLike]: `%${keywords}%` },
+        communityId: community.id,
+      },
+      limit: +pageSize,
+      offset: +pageIndex * +pageSize,
+      order: [[sortField, sortOrder]],
+    };
+  }
+
+  if (filterType === 'location') {
+    dbQuery = {
+      where: {},
+      limit: +pageSize,
+      offset: +pageIndex * +pageSize,
+      order: [[sortField, sortOrder]],
+    };
+  }
+
+  Story.findAndCountAll(dbQuery)
+    .then((stories) => res.json(stories))
     .catch(next);
 });
 
