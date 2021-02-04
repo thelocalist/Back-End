@@ -5,7 +5,7 @@ module.exports = (err, req, res, next) => {
     next();
   }
 
-  console.error(err.errors || err.message);
+  console.error('ERROR', err.errors || err.message);
 
   if (err instanceof Sequelize.ValidationError) {
     res.status(err.status || 400).json(
