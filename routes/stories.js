@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { pick } = require('lodash');
 const passport = require('passport');
 const { Sequelize } = require('sequelize');
-const { Story, Community } = require('../models');
+const { Story } = require('../models');
 
 const { Op } = Sequelize;
 
@@ -123,13 +123,10 @@ router.get('/search', async (req, res, next) => {
   }
 
   if (filterType === 'communityId') {
-    const community = await Community.findOne({
-      where: { title: filterValue },
-    });
     dbQuery = {
       where: {
         title: { [Op.iLike]: `%${keywords}%` },
-        communityId: community.id,
+        communityId: filterValue,
       },
       limit: +pageSize,
       offset: +pageIndex * +pageSize,
