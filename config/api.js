@@ -6,6 +6,6 @@ const cors = require('cors');
 module.exports = (app) => {
   app.use(morganLogger('dev'));
   app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.json());
+  app.use(bodyParser.json({ limit: process.env.MAX_BODY_LIMIT }));
   app.use(cors());
 };

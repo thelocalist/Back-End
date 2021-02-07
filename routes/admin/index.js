@@ -1,9 +1,12 @@
 const router = require('express').Router();
 const passport = require('passport');
 const { crud, sequelizeCrud } = require('express-sequelize-crud');
+
+const { imageUpload } = require('../../config/base64Upload');
 const { ROLES } = require('../../config/constants');
 const { Contact, Community, Story } = require('../../models');
 const { requireRole } = require('../../middleware/roles');
+const removeUploadIfExists = require('../../helpers/removeUploadIfExists');
 
 router.all('*', passport.authenticate('jwt'), requireRole(ROLES.ADMIN));
 
@@ -11,17 +14,28 @@ router.use(crud('/contacts', sequelizeCrud(Contact)));
 router.use(
   crud('/communities', {
     ...sequelizeCrud(Community),
-    create: (body) => {
-      return Community.create({
-        ...body,
-        imagePath: '/uploads/community.jpg',
-      });
-    },
+    create: (body) =>
+      imageUpload(body.image).then((uiPath) =>
+        Community.create({
+          ...body,
+          imagePath: uiPath,
+        })
+      ),
     update: (id, body) => {
-      return Community.update(
-        { ...body, headerImagePath: '/uploads/story.jpg' },
-        { where: { id } }
-      );
+      Community.findOne({ where: { id } }).then((community) => {
+        if (!community) {
+          return Promise.reject();
+        }
+
+        return imageUpload(body.image)
+          .then((uiPath) =>
+            removeUploadIfExists(community.imagePath).then(() => uiPath)
+          )
+          .then((uiPath) => {
+            community.imagePath = uiPath;
+            return community.save();
+          });
+      });
     },
   })
 );
@@ -29,23 +43,39 @@ router.use(
 router.use(
   crud('/stories', {
     ...sequelizeCrud(Story),
-    create: (body) => {
-      console.log(body);
-      return Story.create({
-        ...body,
-        headerImagePath: '/uploads/story.jpg',
-        authorImagePath: '/uploads/author.jpg',
-      });
-    },
-    update: (id, body) => {
-      return Story.update(
-        {
+    create: (body) =>
+      Promise.all([
+        imageUpload(body.headerImage),
+        imageUpload(body.authorImage),
+      ]).then(([headerImageUiPath, authorImageUiPath]) =>
+        Story.create({
           ...body,
-          headerImagePath: '/uploads/story.jpg',
-          authorImagePath: '/uploads/author.jpg',
-        },
-        { where: { id } }
-      );
+          headerImagePath: headerImageUiPath,
+          authorImagePath: authorImageUiPath,
+        })
+      ),
+    update: (id, body) => {
+      Story.findOne({ where: { id } }).then((story) => {
+        if (!story) {
+          return Promise.reject();
+        }
+
+        return Promise.all([
+          imageUpload(body.headerImage),
+          imageUpload(body.authorImage),
+        ])
+          .then((newImagePaths) =>
+            Promise.all([
+              removeUploadIfExists(story.imagePath),
+              removeUploadIfExists(story.imagePath),
+            ]).then(() => newImagePaths)
+          )
+          .then(([headerImageUiPath, authorImageUiPath]) => {
+            story.headerImagePath = headerImageUiPath;
+            story.authorImagePath = authorImageUiPath;
+            return story.save();
+          });
+      });
     },
   })
 );
