@@ -11,6 +11,7 @@ const removeUploadIfExists = require('../../helpers/removeUploadIfExists');
 router.all('*', passport.authenticate('jwt'), requireRole(ROLES.ADMIN));
 
 router.use(crud('/contacts', sequelizeCrud(Contact)));
+
 router.use(
   crud('/communities', {
     ...sequelizeCrud(Community),
@@ -27,14 +28,21 @@ router.use(
           return Promise.reject();
         }
 
+        if (!body.image) {
+          community.title = body.title;
+          return community.save();
+        }
+
         return imageUpload(body.image)
           .then((uiPath) =>
             removeUploadIfExists(community.imagePath).then(() => uiPath)
           )
           .then((uiPath) => {
             community.imagePath = uiPath;
+            community.title = body.title;
             return community.save();
-          });
+          })
+          .catch((error) => console.log(error));
       });
     },
   })
@@ -60,6 +68,15 @@ router.use(
           return Promise.reject();
         }
 
+        if (!body.headerImage && !body.authorImage) {
+          story.content = body.content;
+          story.title = body.title;
+          story.communityId = body.communityId;
+          story.isFeatured = body.isFeatured;
+          story.authorName = body.authorName;
+          return story.save();
+        }
+
         return Promise.all([
           imageUpload(body.headerImage),
           imageUpload(body.authorImage),
@@ -71,10 +88,21 @@ router.use(
             ]).then(() => newImagePaths)
           )
           .then(([headerImageUiPath, authorImageUiPath]) => {
-            story.headerImagePath = headerImageUiPath;
-            story.authorImagePath = authorImageUiPath;
+            console.log('IMAGES', headerImageUiPath, authorImageUiPath);
+            if (headerImageUiPath) {
+              story.headerImagePath = headerImageUiPath;
+            }
+            if (authorImageUiPath) {
+              story.authorImagePath = authorImageUiPath;
+            }
+            story.content = body.content;
+            story.title = body.title;
+            story.communityId = body.communityId;
+            story.isFeatured = body.isFeatured;
+            story.authorName = body.authorName;
             return story.save();
-          });
+          })
+          .catch((error) => console.log(error));
       });
     },
   })

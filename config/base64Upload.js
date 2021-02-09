@@ -4,6 +4,10 @@ const { UPLOAD_SERVER_PATH, UPLOAD_UI_PATH } = require('./constants');
 const imageUpload = (image) => {
   console.log(UPLOAD_SERVER_PATH);
 
+  if (!image) {
+    return new Promise((resolve) => resolve(''));
+  }
+
   return new Promise((resolve, reject) =>
     base64Img.img(
       image,
