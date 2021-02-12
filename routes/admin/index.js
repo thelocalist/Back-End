@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const passport = require('passport');
+const pick = require('lodash/pick');
 const { crud, sequelizeCrud } = require('express-sequelize-crud');
 
 const { imageUpload } = require('../../config/base64Upload');
@@ -18,33 +19,30 @@ router.use(
     create: (body) =>
       imageUpload(body.image).then((uiPath) =>
         Community.create({
-          ...body,
+          ...pick(body, ['title']),
           imagePath: uiPath,
         })
       ),
-    update: (id, body) => {
+    update: (id, body) =>
       Community.findOne({ where: { id } }).then((community) => {
         if (!community) {
           return Promise.reject();
         }
 
-        if (!body.image) {
-          community.title = body.title;
-          return community.save();
-        }
-
-        return imageUpload(body.image)
-          .then((uiPath) =>
-            removeUploadIfExists(community.imagePath).then(() => uiPath)
+        return (body.image
+          ? imageUpload(body.image).then((imageUiPath) =>
+              removeUploadIfExists(community.imagePath).then(() => imageUiPath)
+            )
+          : Promise.resolve()
+        )
+          .then((imageUiPath) =>
+            community.update({
+              ...pick(body, ['title']),
+              imagePath: imageUiPath || community.imagePath,
+            })
           )
-          .then((uiPath) => {
-            community.imagePath = uiPath;
-            community.title = body.title;
-            return community.save();
-          })
           .catch((error) => console.log(error));
-      });
-    },
+      }),
   })
 );
 
@@ -57,54 +55,57 @@ router.use(
         imageUpload(body.authorImage),
       ]).then(([headerImageUiPath, authorImageUiPath]) =>
         Story.create({
-          ...body,
+          ...pick(body, [
+            'title',
+            'authorName',
+            'communityId',
+            'isFeatured',
+            'content',
+            'neighborhood',
+          ]),
           headerImagePath: headerImageUiPath,
           authorImagePath: authorImageUiPath,
         })
       ),
-    update: (id, body) => {
+    update: (id, body) =>
       Story.findOne({ where: { id } }).then((story) => {
         if (!story) {
           return Promise.reject();
         }
 
-        if (!body.headerImage && !body.authorImage) {
-          story.content = body.content;
-          story.title = body.title;
-          story.communityId = body.communityId;
-          story.isFeatured = body.isFeatured;
-          story.authorName = body.authorName;
-          return story.save();
-        }
-
         return Promise.all([
-          imageUpload(body.headerImage),
-          imageUpload(body.authorImage),
+          body.headerImage
+            ? imageUpload(body.headerImage).then((headerImageUiPath) =>
+                removeUploadIfExists(story.headerImagePath).then(
+                  () => headerImageUiPath
+                )
+              )
+            : Promise.resolve(),
+
+          body.authorImage
+            ? imageUpload(body.authorImage).then((authorImageUiPath) =>
+                removeUploadIfExists(story.authorImagePath).then(
+                  () => authorImageUiPath
+                )
+              )
+            : Promise.resolve(),
         ])
-          .then((newImagePaths) =>
-            Promise.all([
-              removeUploadIfExists(story.imagePath),
-              removeUploadIfExists(story.imagePath),
-            ]).then(() => newImagePaths)
+          .then(([headerImageUiPath, authorImageUiPath]) =>
+            story.update({
+              ...pick(body, [
+                'title',
+                'authorName',
+                'communityId',
+                'isFeatured',
+                'content',
+                'neighborhood',
+              ]),
+              headerImagePath: headerImageUiPath || story.headerImagePath,
+              authorImagePath: authorImageUiPath || story.authorImagePath,
+            })
           )
-          .then(([headerImageUiPath, authorImageUiPath]) => {
-            console.log('IMAGES', headerImageUiPath, authorImageUiPath);
-            if (headerImageUiPath) {
-              story.headerImagePath = headerImageUiPath;
-            }
-            if (authorImageUiPath) {
-              story.authorImagePath = authorImageUiPath;
-            }
-            story.content = body.content;
-            story.title = body.title;
-            story.communityId = body.communityId;
-            story.isFeatured = body.isFeatured;
-            story.authorName = body.authorName;
-            return story.save();
-          })
           .catch((error) => console.log(error));
-      });
-    },
+      }),
   })
 );
 

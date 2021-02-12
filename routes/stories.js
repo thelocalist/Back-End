@@ -53,6 +53,7 @@ router.get('/', (req, res, next) => {
  * @property {integer} communityId
  * @property {boolean} isFeatured
  * @property {string} content
+ * @property {string} neighborhood
  */
 
 /**
@@ -72,6 +73,7 @@ router.post('/', passport.authenticate('jwt'), (req, res, next) => {
       'communityId',
       'isFeatured',
       'content',
+      'neighborhood',
     ]),
     userId: req.user.id,
   })
@@ -101,45 +103,35 @@ router.get('/search', async (req, res, next) => {
     sortOrder = 'desc',
   } = req.query;
 
-  let dbQuery = {};
+  const dbQuery = {
+    limit: +pageSize,
+    offset: +pageIndex * +pageSize,
+    order: [[sortField, sortOrder]],
+  };
 
   if (filterType === 'authorName') {
-    dbQuery = {
-      where: { authorName: { [Op.iLike]: `%${keywords}%` } },
-      // include: [User],
-      limit: +pageSize,
-      offset: +pageIndex * +pageSize,
-      order: [[sortField, sortOrder]],
+    dbQuery.where = {
+      authorName: { [Op.iLike]: `%${keywords}%` },
     };
   }
 
   if (filterType === 'keywords') {
-    dbQuery = {
-      where: { title: { [Op.iLike]: `%${keywords}%` } },
-      limit: +pageSize,
-      offset: +pageIndex * +pageSize,
-      order: [[sortField, sortOrder]],
+    dbQuery.where = {
+      title: { [Op.iLike]: `%${keywords}%` },
     };
   }
 
   if (filterType === 'communityId') {
-    dbQuery = {
-      where: {
-        title: { [Op.iLike]: `%${keywords}%` },
-        communityId: filterValue,
-      },
-      limit: +pageSize,
-      offset: +pageIndex * +pageSize,
-      order: [[sortField, sortOrder]],
+    dbQuery.where = {
+      title: { [Op.iLike]: `%${keywords}%` },
+      communityId: filterValue,
     };
   }
 
   if (filterType === 'location') {
-    dbQuery = {
-      where: {},
-      limit: +pageSize,
-      offset: +pageIndex * +pageSize,
-      order: [[sortField, sortOrder]],
+    dbQuery.where = {
+      neighborhood: filterValue.toLowerCase(),
+      title: { [Op.iLike]: `%${keywords}%` },
     };
   }
 
@@ -157,7 +149,13 @@ router.get('/search', async (req, res, next) => {
  */
 router.get('/:id', (req, res, next) =>
   Story.findByPk(req.params.id)
-    .then((story) => res.json(story))
+    .then((story) => {
+      if (story) {
+        res.json(story);
+      } else {
+        res.status(404).json({ message: 'Nothing found' });
+      }
+    })
     .catch(next)
 );
 
@@ -179,6 +177,7 @@ router.patch('/:id', (req, res, next) =>
       'communityId',
       'isFeatured',
       'content',
+      'neighborhood',
     ]),
     {
       where: { id: req.params.id, userId: req.user.id },

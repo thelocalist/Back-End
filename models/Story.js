@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
    * @property {integer} communityId
    * @property {boolean} isFeatured
    * @property {string} content
+   * @property {string} neighborhood
    * @property {string} createdAt ISO format
    * @property {string} updatedAt ISO format
    */
@@ -33,8 +34,21 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.TEXT,
       },
+      neighborhood: {
+        allowNull: false,
+        type: DataTypes.STRING,
+      },
     },
-    {}
+    {
+      hooks: {
+        beforeValidate: (story) => {
+          if (story.neighborhood) {
+            story.neighborhood = story.neighborhood.toLowerCase();
+          }
+          return story;
+        },
+      },
+    }
   );
 
   // TODO uncomment when will be ready to add users
