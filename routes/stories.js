@@ -93,6 +93,7 @@ router.post('/', passport.authenticate('jwt'), (req, res, next) => {
  * @returns {Array.<Story>} 200 - Stories list
  */
 router.get('/search', async (req, res, next) => {
+  console.log(req.query);
   const {
     pageSize,
     pageIndex,
@@ -101,6 +102,7 @@ router.get('/search', async (req, res, next) => {
     keywords,
     sortField = 'updatedAt',
     sortOrder = 'desc',
+    isFeatured = false,
   } = req.query;
 
   const dbQuery = {
@@ -128,11 +130,15 @@ router.get('/search', async (req, res, next) => {
     };
   }
 
-  if (filterType === 'location') {
+  if (filterType === 'neighborhood') {
     dbQuery.where = {
       neighborhood: filterValue.toLowerCase(),
       title: { [Op.iLike]: `%${keywords}%` },
     };
+  }
+
+  if (isFeatured) {
+    dbQuery.where.isFeatured = isFeatured === 'true';
   }
 
   Story.findAndCountAll(dbQuery)
