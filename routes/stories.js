@@ -11,6 +11,7 @@ const { Op } = Sequelize;
  * @route GET /stories
  * @group Stories
  * @param {string} isFeatured.query - e.g. true
+ * @param {string} isMainStory.query - e.g. true
  * @param {number} pageIndex.query - e.g. 0
  * @param {number} pageSize.query - e.g. 20
  * @param {number} sortField.query - e.g. updatedAt
@@ -20,6 +21,7 @@ const { Op } = Sequelize;
 router.get('/', (req, res, next) => {
   const {
     isFeatured,
+    isMainStory = false,
     pageIndex = 0,
     pageSize = 20,
     sortField = 'updatedAt',
@@ -36,6 +38,10 @@ router.get('/', (req, res, next) => {
 
   if (isFeatured) {
     dbQuery.where.isFeatured = isFeatured === 'true';
+  }
+
+  if (isMainStory !== undefined) {
+    dbQuery.where.isMainStory = isMainStory;
   }
 
   Story.findAndCountAll(dbQuery)
@@ -85,6 +91,8 @@ router.post('/', passport.authenticate('jwt'), (req, res, next) => {
  * Search Stories
  * @route GET /stories/search
  * @group Stories
+ * @param {string} isFeatured.query - e.g. true
+ * @param {string} isMainStory.query - e.g. true
  * @param {string} filterType.query
  * @param {string} filterValue.query
  * @param {string} keywords.query
@@ -92,6 +100,8 @@ router.post('/', passport.authenticate('jwt'), (req, res, next) => {
  * @param {number} pageSize.query - e.g. 20
  * @returns {Array.<Story>} 200 - Stories list
  */
+
+/* eslint-disable */
 router.get('/search', async (req, res, next) => {
   const {
     pageSize,
@@ -101,8 +111,11 @@ router.get('/search', async (req, res, next) => {
     keywords,
     sortField = 'updatedAt',
     sortOrder = 'desc',
-    isFeatured = false,
+    isFeatured,
+    isMainStory,
   } = req.query;
+
+  console.log(req.query);
 
   const dbQuery = {
     limit: +pageSize,
@@ -136,14 +149,26 @@ router.get('/search', async (req, res, next) => {
     };
   }
 
-  if (isFeatured) {
-    dbQuery.where.isFeatured = isFeatured === 'true';
+  if (isFeatured !== undefined) {
+    if (!dbQuery.where) {
+      dbQuery.where = {};
+    }
+    dbQuery.where.isFeatured = isFeatured;
+  }
+
+  if (isMainStory !== undefined) {
+    if (!dbQuery.where) {
+      dbQuery.where = {};
+    }
+    dbQuery.where.isMainStory = isMainStory;
   }
 
   Story.findAndCountAll(dbQuery)
     .then((stories) => res.json(stories))
     .catch(next);
 });
+
+/* eslint-disable */
 
 /**
  * Get single Story

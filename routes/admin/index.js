@@ -53,8 +53,18 @@ router.use(
       Promise.all([
         imageUpload(body.headerImage),
         imageUpload(body.authorImage),
-      ]).then(([headerImageUiPath, authorImageUiPath]) =>
-        Story.create({
+      ]).then(([headerImageUiPath, authorImageUiPath]) => {
+        if (body.isMainStory) {
+          Story.findOne({ where: { isMainStory: true } })
+            .then((mainStory) => {
+              mainStory.update({ isMainStory: false });
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+
+        return Story.create({
           ...pick(body, [
             'title',
             'authorName',
@@ -62,15 +72,28 @@ router.use(
             'isFeatured',
             'content',
             'neighborhood',
+            'isMainStory',
           ]),
           headerImagePath: headerImageUiPath,
           authorImagePath: authorImageUiPath,
-        })
-      ),
+        });
+      }),
     update: (id, body) =>
       Story.findOne({ where: { id } }).then((story) => {
         if (!story) {
           return Promise.reject();
+        }
+
+        if (body.isMainStory) {
+          Story.findOne({ where: { isMainStory: true } })
+            .then((mainStory) => {
+              if (mainStory.id !== id) {
+                mainStory.update({ isMainStory: false });
+              }
+            })
+            .catch((error) => {
+              console.log(error);
+            });
         }
 
         return Promise.all([
@@ -99,6 +122,7 @@ router.use(
                 'isFeatured',
                 'content',
                 'neighborhood',
+                'isMainStory',
               ]),
               headerImagePath: headerImageUiPath || story.headerImagePath,
               authorImagePath: authorImageUiPath || story.authorImagePath,
