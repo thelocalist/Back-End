@@ -93,7 +93,6 @@ router.post('/', passport.authenticate('jwt'), (req, res, next) => {
  * @returns {Array.<Story>} 200 - Stories list
  */
 router.get('/search', async (req, res, next) => {
-  console.log(req.query);
   const {
     pageSize,
     pageIndex,

@@ -22,5 +22,11 @@ module.exports = (sequelize, DataTypes) => {
     {}
   );
 
+  Community.associate = (models) => {
+    Community.hasMany(models.Story, {
+      foreignKey: 'communityId',
+    });
+  };
+
   return Community;
 };
