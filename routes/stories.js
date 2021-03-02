@@ -149,6 +149,15 @@ router.get('/search', async (req, res, next) => {
     };
   }
 
+  if (filterType === 'communityId,neighborhood') {
+    const filterValues = filterValue.split(',');
+    dbQuery.where = {
+      communityId: filterValues[0],
+      neighborhood: filterValues[1].toLowerCase(),
+      title: { [Op.iLike]: `%${keywords}%` },
+    };
+  }
+
   if (isFeatured !== undefined) {
     if (!dbQuery.where) {
       dbQuery.where = {};
