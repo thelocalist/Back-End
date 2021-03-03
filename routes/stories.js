@@ -21,7 +21,7 @@ const { Op } = Sequelize;
 router.get('/', (req, res, next) => {
   const {
     isFeatured,
-    isMainStory = false,
+    isMainStory,
     pageIndex = 0,
     pageSize = 20,
     sortField = 'updatedAt',

@@ -70,4 +70,23 @@ router.get('/search', async (req, res, next) => {
     .catch(next);
 });
 
+/**
+ * Get single Community
+ * @route GET /communities/{id}
+ * @group Communities
+ * @param {integer} id.path.required
+ * @returns {Community.model} 200 - Community
+ */
+router.get('/:id', (req, res, next) =>
+  Community.findByPk(req.params.id)
+    .then((community) => {
+      if (community) {
+        res.json(community);
+      } else {
+        res.status(404).json({ message: 'Nothing found' });
+      }
+    })
+    .catch(next)
+);
+
 module.exports = router;
