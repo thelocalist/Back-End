@@ -8,8 +8,10 @@ module.exports = (sequelize, DataTypes) => {
    * @property {string} authorName
    * @property {integer} communityId
    * @property {boolean} isFeatured
+   * @property {boolean} isMainStory
    * @property {string} content
    * @property {string} neighborhood
+   * @property {number} viewCount
    * @property {string} createdAt ISO format
    * @property {string} updatedAt ISO format
    */
@@ -42,6 +44,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
+      },
+      viewCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
       },
     },
     {

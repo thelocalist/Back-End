@@ -190,6 +190,9 @@ router.get('/:id', (req, res, next) =>
   Story.findByPk(req.params.id)
     .then((story) => {
       if (story) {
+        story.update({
+          viewCount: story.viewCount + 1,
+        });
         res.json(story);
       } else {
         res.status(404).json({ message: 'Nothing found' });
