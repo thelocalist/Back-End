@@ -3,6 +3,7 @@ const debug = require('./debug');
 const passport = require('./passport');
 const swagger = require('./swagger');
 const seeds = require('./seeds');
+require('./cron');
 
 module.exports = (app) => {
   debug(app);
